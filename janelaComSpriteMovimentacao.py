@@ -54,7 +54,7 @@ ultimo_tempo = pygame.time.get_ticks()
 # Posição inicial do sprite
 pos_x = 10  # Posição inicial do sprite no eixo X
 pos_y = 10  # Posição inicial do sprite no eixo Y
-movimento = 1  # Ajuste para que a movimentação seja mais suave
+movimento = 1.5  # Ajuste para que a movimentação seja mais suave
 
 # Loop principal
 rodando = True
@@ -72,12 +72,37 @@ while rodando:
         pos_x += movimento  # Movimento para a direita
     if teclas[pygame.K_LEFT]:
         pos_x -= movimento  # Movimento para a esquerda
+    if teclas[pygame.K_DOWN]:
+        pos_y += movimento # Movimento para baixo
+    if teclas[pygame.K_UP]:
+        pos_y -= movimento # Movimento para cima
 
-    # Mantém o sprite dentro da janela
-    if pos_x < 0:
-        pos_x = 0
-    elif pos_x > largura - quadro_largura:
-        pos_x = largura - quadro_largura
+    # Cria retangulo do botão
+    botao = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+
+    # Cria retangulo do sprite
+    sprite = pygame.Rect(pos_x, pos_y, quadro_largura, quadro_altura -52)
+
+    # Cria retangulo da janela
+    janela = pygame.Rect(0, 0, largura, altura)
+
+    # Colisão com a janela
+    sprite.clamp_ip(janela)
+
+    # Sincronizar sprite com triangulo
+    pos_x, pos_y = sprite.topleft
+
+    # Colisão sprite com botão
+    if sprite.colliderect(botao):
+        if teclas[pygame.K_RIGHT]:
+            pos_x -= movimento  # Movimento para a direita
+        if teclas[pygame.K_LEFT]:
+            pos_x += movimento  # Movimento para a esquerda
+        if teclas[pygame.K_DOWN]:
+            pos_y -= movimento # Movimento para baixo
+        if teclas[pygame.K_UP]:
+            pos_y += movimento # Movimento para cima
+
 
     # Calcula o tempo passado desde o último quadro
     agora = pygame.time.get_ticks()
