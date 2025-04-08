@@ -54,7 +54,7 @@ ultimo_tempo = pygame.time.get_ticks()
 # Posição inicial do sprite
 pos_x = 10  # Posição inicial do sprite no eixo X
 pos_y = 10  # Posição inicial do sprite no eixo Y
-movimento = 1.5  # Ajuste para que a movimentação seja mais suave
+movimento = 1  # Ajuste para que a movimentação seja mais suave
 
 # Loop principal
 rodando = True
@@ -81,7 +81,7 @@ while rodando:
     botao = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
 
     # Cria retangulo do sprite
-    sprite = pygame.Rect(pos_x, pos_y, quadro_largura, quadro_altura -52)
+    sprite = pygame.Rect(pos_x, pos_y, quadro_largura -20, quadro_altura -52)
 
     # Cria retangulo da janela
     janela = pygame.Rect(0, 0, largura, altura)
