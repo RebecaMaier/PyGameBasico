@@ -66,7 +66,7 @@ class Celula:
         pygame.draw.line(tela, self.corLinha, arEsquerdaIni, arEsquerdaFim)
         pygame.draw.line(tela, self.corLinha, arDireitaIni, arDireitaFim)
 
-        '''
+        
         # linha superior
         if (self.arestasFechadas.superior):
             pygame.draw.line(tela, self.corLinha, arSuperiorIni, arSuperiorFim)
@@ -79,15 +79,15 @@ class Celula:
         # linha direita
         if (self.arestasFechadas.direita):
             pygame.draw.line(tela, self.corLinha, arDireitaIni, arDireitaFim)
-        '''
-        '''
+    
+        
         pygame.draw.line(tela, self.corLinha, arSuperiorIni, arSuperiorFim)
         pygame.draw.line(tela, self.corLinha, arInferiorIni, arInferiorFim)
         pygame.draw.line(tela, self.corLinha, arEsquerdaIni, arEsquerdaFim)
         pygame.draw.line(tela, self.corLinha, arDireitaIni, arDireitaFim)
-        '''
+    
 
-
+# Classe que implementa o algoritmo de Aldous-Broder
 class AldousBroder:
     def __init__(self, qtLinhas, qtColunas, aresta, celulaPadrao):
         self.matriz = Malha(qtLinhas, qtColunas, aresta, celulaPadrao)
@@ -189,29 +189,129 @@ class Malha:
             for coluna in range(self.qtColunas):
                 self.matriz[linha][coluna].desenhar(tela, x + coluna * self.aresta, y + linha * self.aresta, self.aresta)
 
+# Função que garante a existência da entrada e da saída no labirinto
+# Entrada na posição (1, 0) e saída na posição (N-1, M-1)
+def garantir_entrada_saida(matriz, entrada, saida):
+    lin_e, col_e = entrada
+    lin_s, col_s = saida
+    matriz[lin_e][col_e].aberta = True
+    matriz[lin_e][col_e].corAberta = (0, 255, 0)  # verde para entrada
+    matriz[lin_s][col_s].aberta = True
+    matriz[lin_s][col_s].corAberta = (255, 0, 0)  # vermelho para saída
+
+
+# Algoritmo de resolução por força bruta (backtracking)
+def resolver_forca_bruta(matriz, entrada, saida, visitado=None, caminho=None):
+    if visitado is None:
+        visitado = set()
+    if caminho is None:
+        caminho = []
+
+    lin, col = entrada
+    if entrada == saida:
+        caminho.append((lin, col))
+        return True
+
+    if entrada in visitado:
+        return False
+
+    visitado.add(entrada)
+    caminho.append((lin, col))
+
+    # Lista de movimentos possíveis: cima, baixo, esquerda, direita
+    vizinhos = [(lin-1, col), (lin+1, col), (lin, col-1), (lin, col+1)]
+
+    for l, c in vizinhos:
+        if 0 <= l < len(matriz) and 0 <= c < len(matriz[0]):
+            if matriz[l][c].aberta:
+                if resolver_forca_bruta(matriz, (l, c), saida, visitado, caminho):
+                    return True
+
+    # Backtracking: remove do caminho se não der certo
+    caminho.pop()
+    return False
+
+
+from collections import deque
+
+# Algoritmo de resolução por BFS (Breadth-First Search)
+def bfs_resolver(matriz, entrada, saida):
+    N = len(matriz)
+    M = len(matriz[0])
+    fila = deque()
+    fila.append((entrada, [entrada]))
+    visitado = set()
+
+    while fila:
+        (lin, col), caminho = fila.popleft()
+        if (lin, col) == saida:
+            return caminho
+
+        visitado.add((lin, col))
+
+        # Movimentos possíveis: cima, baixo, esquerda, direita
+        vizinhos = [(lin-1, col), (lin+1, col), (lin, col-1), (lin, col+1)]
+
+        for l, c in vizinhos:
+            if 0 <= l < N and 0 <= c < M:
+                if matriz[l][c].aberta and (l, c) not in visitado:
+                    fila.append(((l, c), caminho + [(l, c)]))
+
+    return None  # sem solução
+
 
 def main():
     pygame.init()
 
     ### definição das cores
     azul = (50, 50, 255)
-    preto = (0, 0, 0)
-    branco = (255, 255, 255)
+    preto = (30, 30, 30)       # Cor de fundo - tom mais escuro
+    branco = (200, 200, 255)   # Cor da célula aberta - azul claro
     vermelho = (255, 0, 0)
-    cinza = (128, 128, 128)
+    cinza = (100, 100, 100)    # Cor das arestas
 
-    # Dimensões da janela
-    [largura, altura] = [600, 300]
+    # Dimensões da janela - maior para melhor visualização 
+    [largura, altura] = [900, 700]
 
     ### Dimensões da malha (matriz NxM)
-    N = 20  # número de linhas
-    M = 20  # número de colunas
-    aresta = 10  # dimensão dos lados das células
+    N = 30  # número de linhas
+    M = 30  # número de colunas
+    aresta = 20  # dimensão dos lados das células
 
     # cores: preenchimento - visitada - linha - aberta
     celulaPadrao = Celula(ArestasFechadas(False, False, False, False), preto, cinza, preto, branco,False, False)
     labirinto = AldousBroder(N, M, aresta, celulaPadrao)
     labirinto.GeraLabirinto()
+
+    # Garante a entrada e saída após gerar o labirinto
+    entrada = (1, 0)
+    saida = (N-1, M-1)
+    garantir_entrada_saida(labirinto.matriz, entrada, saida)
+
+
+    # Resolve com o algoritmo de força bruta
+    caminho_fb = []
+    sucesso_fb = resolver_forca_bruta(labirinto.matriz, entrada, saida, caminho=caminho_fb)
+
+    # Se encontrou solução, marca o caminho com uma cor visível (ex: amarelo)
+    if sucesso_fb:
+        for (lin, col) in caminho_fb:
+            labirinto.matriz[lin][col].corAberta = (255, 255, 0)
+    else:
+        print("Labirinto sem solução (força bruta)")
+
+
+    # Resolve com BFS
+    caminho_bfs = bfs_resolver(labirinto.matriz, entrada, saida)
+
+    if caminho_bfs:
+        for (lin, col) in caminho_bfs:
+            labirinto.matriz[lin][col].corAberta = (0, 255, 255)  # azul claro para BFS
+    else:
+        print("Labirinto sem solução (BFS)")
+
+
+
 
     # Cria a janela
     tela = pygame.display.set_mode((largura, altura))
