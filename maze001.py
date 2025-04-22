@@ -139,12 +139,7 @@ class AldousBroder:
                 # incluir aqui a rotina paar abrir uma passagem. Por enquanto, apenas pinta a célula
                 self.matriz[currentCellLine][currentCellColumn].aberta = True
                 self.matriz[neighCellLine][neighCellColumn].visited = True
-                '''
-                self.matriz[currentCellLine][currentCellColumn].aberta = True
-                self.matriz[neighCellLine][neighCellColumn].aberta     = True
-                self.matriz[neighCellLine][neighCellColumn].visited    = True
-                self.matriz[neighCellLine][neighCellColumn].corPreenchimento = (0, 255, 0)
-                '''
+                
                 unvisitedCells -= 1
                 # cont += 1
 
@@ -260,83 +255,86 @@ def bfs_resolver(matriz, entrada, saida):
     return None  # sem solução
 
 
+# Função para mostrar o menu de opções
+def mostrar_menu():
+    print("╔════════════════════════════════╗")
+    print("║       MENU DE OPÇÕES           ║")
+    print("╠════════════════════════════════╣")
+    print("║ 1 - Apenas gerar labirinto     ║")
+    print("║ 2 - Resolver com força bruta   ║")
+    print("║ 3 - Resolver com BFS           ║")
+    print("║ 4 - Resolver com ambos         ║")
+    print("╚════════════════════════════════╝")
+    
+    while True:
+        try:
+            opcao = int(input("Escolha uma opção (1-4): "))
+            if opcao in [1, 2, 3, 4]:
+                return opcao
+            else:
+                print("Opção inválida. Tente novamente.")
+        except ValueError:
+            print("Digite um número válido.")
+
 def main():
+
+    # Chama o menu e armazena a opção escolhida pelo usuário
+    opcao_menu = mostrar_menu()
+
     pygame.init()
 
     ### definição das cores
     azul = (50, 50, 255)
-    preto = (30, 30, 30)       # Cor de fundo - tom mais escuro
-    branco = (200, 200, 255)   # Cor da célula aberta - azul claro
+    preto = (30, 30, 30)
+    branco = (200, 200, 255)
     vermelho = (255, 0, 0)
-    cinza = (100, 100, 100)    # Cor das arestas
+    cinza = (100, 100, 100)
 
-    # Dimensões da janela - maior para melhor visualização 
     [largura, altura] = [900, 700]
+    N = 30
+    M = 30
+    aresta = 20
 
-    ### Dimensões da malha (matriz NxM)
-    N = 30  # número de linhas
-    M = 30  # número de colunas
-    aresta = 20  # dimensão dos lados das células
-
-    # cores: preenchimento - visitada - linha - aberta
     celulaPadrao = Celula(ArestasFechadas(False, False, False, False), preto, cinza, preto, branco,False, False)
     labirinto = AldousBroder(N, M, aresta, celulaPadrao)
     labirinto.GeraLabirinto()
 
-    # Garante a entrada e saída após gerar o labirinto
     entrada = (1, 0)
     saida = (N-1, M-1)
     garantir_entrada_saida(labirinto.matriz, entrada, saida)
 
+    if opcao_menu == 2 or opcao_menu == 4:
+        caminho_fb = []
+        sucesso_fb = resolver_forca_bruta(labirinto.matriz, entrada, saida, caminho=caminho_fb)
+        if sucesso_fb:
+            for (lin, col) in caminho_fb:
+                labirinto.matriz[lin][col].corAberta = (255, 255, 0)
+        else:
+            print("Labirinto sem solução (força bruta)")
 
-    # Resolve com o algoritmo de força bruta
-    caminho_fb = []
-    sucesso_fb = resolver_forca_bruta(labirinto.matriz, entrada, saida, caminho=caminho_fb)
+    if opcao_menu == 3 or opcao_menu == 4:
+        caminho_bfs = bfs_resolver(labirinto.matriz, entrada, saida)
+        if caminho_bfs:
+            for (lin, col) in caminho_bfs:
+                labirinto.matriz[lin][col].corAberta = (0, 255, 255)
+        else:
+            print("Labirinto sem solução (BFS)")
 
-    # Se encontrou solução, marca o caminho com uma cor visível (ex: amarelo)
-    if sucesso_fb:
-        for (lin, col) in caminho_fb:
-            labirinto.matriz[lin][col].corAberta = (255, 255, 0)
-    else:
-        print("Labirinto sem solução (força bruta)")
-
-
-    # Resolve com BFS
-    caminho_bfs = bfs_resolver(labirinto.matriz, entrada, saida)
-
-    if caminho_bfs:
-        for (lin, col) in caminho_bfs:
-            labirinto.matriz[lin][col].corAberta = (0, 255, 255)  # azul claro para BFS
-    else:
-        print("Labirinto sem solução (BFS)")
-
-
-
-
-    # Cria a janela
     tela = pygame.display.set_mode((largura, altura))
     pygame.display.set_caption('Mostra Malha')
 
-    ###
-    ### Loop principal
-    ###
     while True:
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        ### preenche a tela com a cor branca
         tela.fill(branco)
-
-        ### centraliza a grade na janela
         [linha, coluna] = ((tela.get_width() - (M * aresta)) // 2,
                            (tela.get_height() - (N * aresta)) // 2)
-        # desenhar_grade(tela, linha, coluna, aresta, N, M, matriz)
         labirinto.matriz.DesenhaLabirinto(tela, linha, coluna)
-
-        ### atualiza a tela
         pygame.display.flip()
+
 
 
 if __name__ == '__main__':
